@@ -1,5 +1,12 @@
-import { Flame, Trophy, Calendar, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Flame, Trophy, Calendar, Zap, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  differenceInCalendarDays,
+  startOfWeek,
+  addDays,
+  format,
+  isSameDay,
+} from "date-fns";
 
 interface StreakDisplayProps {
   currentStreak: number;
@@ -8,138 +15,213 @@ interface StreakDisplayProps {
   className?: string;
 }
 
-const StreakDisplay = ({ currentStreak, longestStreak, lastQuestDate, className }: StreakDisplayProps) => {
-  const today = new Date().toISOString().split('T')[0];
-  const isActiveToday = lastQuestDate === today;
-  
-  // Calculate streak bonus (5 coins per day, max 50)
+const StreakDisplay = ({
+  currentStreak,
+  longestStreak,
+  lastQuestDate,
+  className,
+}: StreakDisplayProps) => {
+  const today = new Date();
+
+  // Logic: Active if last quest was today
+  const isActiveToday = lastQuestDate
+    ? isSameDay(new Date(lastQuestDate), today)
+    : false;
+
+  // Logic: At risk if last quest was yesterday (or earlier)
+  const isAtRisk = lastQuestDate
+    ? differenceInCalendarDays(today, new Date(lastQuestDate)) === 1
+    : !isActiveToday; // Default to at risk if no history
+
+  // Calculate streak bonus (Example: 5 coins per day, max 50)
   const nextBonus = Math.min((currentStreak + 1) * 5, 50);
   const currentBonus = Math.min(currentStreak * 5, 50);
 
-  // Determine streak status
+  // Status Message
   const getStreakStatus = () => {
-    if (!lastQuestDate) return { message: 'Start your streak today!', color: 'text-muted-foreground' };
-    
-    const lastDate = new Date(lastQuestDate);
-    const todayDate = new Date(today);
-    const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return { message: 'Streak active! 🔥', color: 'text-primary' };
-    if (diffDays === 1) return { message: 'Complete a quest to keep your streak!', color: 'text-orange-500' };
-    return { message: 'Streak ended. Start a new one!', color: 'text-muted-foreground' };
+    if (isActiveToday)
+      return { message: "Streak active! 🔥", color: "text-orange-500" };
+    if (isAtRisk)
+      return {
+        message: "Complete a quest to save your streak!",
+        color: "text-red-500 animate-pulse",
+      };
+    return {
+      message: "Start a new streak today!",
+      color: "text-muted-foreground",
+    };
   };
 
   const status = getStreakStatus();
 
-  // Fire animation for active streaks
-  const getFlameSize = () => {
-    if (currentStreak >= 10) return 'w-8 h-8';
-    if (currentStreak >= 5) return 'w-7 h-7';
-    return 'w-6 h-6';
-  };
+  // Generate Week Days for the Calendar View
+  const weekStart = startOfWeek(today); // Starts Sunday
+  const weekDays = Array.from({ length: 7 }).map((_, i) =>
+    addDays(weekStart, i)
+  );
 
   return (
-    <div className={cn("clean-card p-5", className)}>
-      {/* Main Streak Display */}
-      <div className="flex items-center gap-4 mb-4">
-        <div className={cn(
-          "relative flex items-center justify-center w-16 h-16 rounded-2xl",
-          currentStreak > 0 ? "bg-gradient-to-br from-orange-400 to-red-500" : "bg-secondary"
-        )}>
-          <Flame className={cn(
-            getFlameSize(),
-            currentStreak > 0 ? "text-white" : "text-muted-foreground",
-            currentStreak > 0 && "animate-pulse"
-          )} />
-          {currentStreak >= 7 && (
-            <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-yellow-400 flex items-center justify-center text-xs font-bold text-yellow-900">
-              🔥
+    <div
+      className={cn(
+        "grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2",
+        className
+      )}>
+      {/* 1. Main Streak Card (Spans 2 columns on Desktop) */}
+      <div className='md:col-span-2 clean-card relative overflow-hidden p-5 md:p-6 flex flex-col justify-between min-h-[180px]'>
+        {/* Background Gradient Blob */}
+        <div className='absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl pointer-events-none' />
+
+        <div className='flex items-start justify-between relative z-10'>
+          <div>
+            <div className='flex items-center gap-2 mb-2'>
+              <span className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
+                Current Streak
+              </span>
+              {isActiveToday && (
+                <span className='px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold border border-green-500/20'>
+                  ACTIVE
+                </span>
+              )}
             </div>
-          )}
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Current Streak</p>
-          <h3 className="font-display text-3xl font-bold">
-            {currentStreak} <span className="text-lg text-muted-foreground">day{currentStreak !== 1 ? 's' : ''}</span>
-          </h3>
-          <p className={cn("text-sm", status.color)}>{status.message}</p>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="p-3 rounded-xl bg-secondary/50">
-          <div className="flex items-center gap-2 mb-1">
-            <Trophy className="w-4 h-4 text-yellow-500" />
-            <span className="text-xs text-muted-foreground">Best Streak</span>
-          </div>
-          <p className="font-display font-bold text-lg">{longestStreak} days</p>
-        </div>
-        <div className="p-3 rounded-xl bg-secondary/50">
-          <div className="flex items-center gap-2 mb-1">
-            <Zap className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground">Today's Bonus</span>
-          </div>
-          <p className="font-display font-bold text-lg text-primary">
-            {isActiveToday ? `+${currentBonus}` : `+${nextBonus}`} coins
-          </p>
-        </div>
-      </div>
+            <div className='flex items-baseline gap-2'>
+              <h3 className='font-display text-4xl md:text-5xl font-bold text-foreground'>
+                {currentStreak}
+              </h3>
+              <span className='text-lg text-muted-foreground font-medium'>
+                days
+              </span>
+            </div>
 
-      {/* Streak Bonus Info */}
-      <div className="p-3 rounded-xl bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 border border-orange-200 dark:border-orange-800">
-        <p className="text-sm font-medium text-orange-800 dark:text-orange-200 flex items-center gap-2">
-          <Flame className="w-4 h-4" />
-          Streak Bonus: +5 coins per day (max 50)
-        </p>
-        <div className="mt-2 flex gap-1">
-          {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-            <div
-              key={day}
+            <p
               className={cn(
-                "flex-1 h-2 rounded-full transition-all",
-                day <= currentStreak 
-                  ? "bg-gradient-to-r from-orange-400 to-red-500" 
-                  : "bg-secondary"
+                "text-sm font-medium mt-2 flex items-center gap-1.5",
+                status.color
+              )}>
+              {isAtRisk && !isActiveToday && (
+                <Flame className='w-4 h-4 fill-current' />
+              )}
+              {status.message}
+            </p>
+          </div>
+
+          {/* Animated Flame Icon */}
+          <div
+            className={cn(
+              "w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shadow-lg transition-all duration-500",
+              isActiveToday
+                ? "bg-gradient-to-br from-orange-400 to-red-600 shadow-orange-500/30"
+                : "bg-secondary grayscale opacity-80"
+            )}>
+            <Flame
+              className={cn(
+                "w-8 h-8 md:w-10 md:h-10 text-white transition-all duration-1000",
+                isActiveToday ? "animate-bounce-slight" : ""
               )}
             />
-          ))}
+          </div>
         </div>
-        <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-          <span>Day 1</span>
-          <span>Day 7+</span>
+
+        {/* Weekly Progress Bar */}
+        <div className='mt-6'>
+          <div className='flex justify-between text-xs text-muted-foreground mb-1.5'>
+            <span>Progress to 7 days</span>
+            <span>{Math.min(currentStreak, 7)} / 7</span>
+          </div>
+          <div className='h-2.5 w-full bg-secondary rounded-full overflow-hidden'>
+            <div
+              className='h-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-1000 ease-out rounded-full relative'
+              style={{ width: `${Math.min((currentStreak / 7) * 100, 100)}%` }}>
+              <div className='absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]' />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Weekly View */}
-      <div className="mt-4 pt-4 border-t border-border">
-        <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
-          This Week
-        </p>
-        <div className="flex gap-2 justify-between">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((dayName, i) => {
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const isToday = i === dayOfWeek;
-            const isPast = i < dayOfWeek;
-            
-            // Simple logic: show as completed if within current streak and in the past
-            const daysAgo = dayOfWeek - i;
-            const isCompleted = isPast && daysAgo <= currentStreak && currentStreak > 0;
-            
+      {/* 2. Stats Column (Right Side) */}
+      <div className='flex flex-col gap-3 md:gap-4'>
+        {/* Bonus Card */}
+        <div className='flex-1 clean-card p-4 flex items-center justify-between bg-gradient-to-br from-card to-secondary/30'>
+          <div>
+            <div className='flex items-center gap-1.5 text-xs text-muted-foreground mb-1'>
+              <Zap className='w-3.5 h-3.5 text-yellow-500' />
+              <span>Today's Bonus</span>
+            </div>
+            <p className='font-display font-bold text-xl md:text-2xl text-primary'>
+              +{isActiveToday ? currentBonus : nextBonus}{" "}
+              <span className='text-sm font-normal text-muted-foreground'>
+                coins
+              </span>
+            </p>
+          </div>
+          <div className='w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20'>
+            <span className='text-lg'>💰</span>
+          </div>
+        </div>
+
+        {/* Best Streak Card */}
+        <div className='flex-1 clean-card p-4 flex items-center justify-between'>
+          <div>
+            <div className='flex items-center gap-1.5 text-xs text-muted-foreground mb-1'>
+              <Trophy className='w-3.5 h-3.5 text-orange-500' />
+              <span>Best Record</span>
+            </div>
+            <p className='font-display font-bold text-xl md:text-2xl'>
+              {longestStreak}{" "}
+              <span className='text-sm font-normal text-muted-foreground'>
+                days
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Weekly Calendar Row (Full Width) */}
+      <div className='md:col-span-3 clean-card p-4 md:p-5'>
+        <div className='flex items-center gap-2 mb-4'>
+          <Calendar className='w-4 h-4 text-primary' />
+          <h4 className='font-semibold text-sm'>This Week</h4>
+        </div>
+
+        <div className='flex justify-between items-center gap-1 md:gap-4'>
+          {weekDays.map((day, i) => {
+            const isToday = isSameDay(day, today);
+            const isPast = day < today; // strictly before today
+
+            // Logic: Mark as "done" if it's in the past and within the streak window
+            // (Simplified logic: assumes consecutive streak for visual demo)
+            const daysAgo = differenceInCalendarDays(today, day);
+            const isCompleted =
+              (isPast && daysAgo <= currentStreak && currentStreak > 0) ||
+              (isToday && isActiveToday);
+
             return (
-              <div key={i} className="flex flex-col items-center gap-1">
-                <span className="text-xs text-muted-foreground">{dayName}</span>
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all",
-                  isToday && isActiveToday && "bg-gradient-to-br from-orange-400 to-red-500 text-white",
-                  isToday && !isActiveToday && "border-2 border-dashed border-orange-400 text-orange-500",
-                  isCompleted && !isToday && "bg-primary/20 text-primary",
-                  !isCompleted && !isToday && isPast && "bg-secondary text-muted-foreground",
-                  !isPast && !isToday && "bg-secondary/50 text-muted-foreground/50"
-                )}>
-                  {isCompleted || (isToday && isActiveToday) ? '✓' : ''}
+              <div
+                key={i}
+                className='flex flex-col items-center gap-2 flex-1 min-w-0'>
+                <span
+                  className={cn(
+                    "text-[10px] md:text-xs font-medium uppercase",
+                    isToday ? "text-primary font-bold" : "text-muted-foreground"
+                  )}>
+                  {format(day, "EEE")}
+                </span>
+
+                <div
+                  className={cn(
+                    "w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-sm transition-all duration-300 relative",
+                    isCompleted
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-100"
+                      : isToday
+                      ? "bg-secondary border-2 border-dashed border-primary/50 text-muted-foreground"
+                      : "bg-secondary/50 text-muted-foreground/30"
+                  )}>
+                  {isCompleted && (
+                    <Check className='w-4 h-4 md:w-5 md:h-5 stroke-[3]' />
+                  )}
+                  {isToday && !isCompleted && (
+                    <div className='w-1.5 h-1.5 rounded-full bg-primary/50 animate-pulse' />
+                  )}
                 </div>
               </div>
             );

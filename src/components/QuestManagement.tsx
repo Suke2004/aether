@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -11,30 +11,32 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { toast } from 'sonner';
-import { 
-  Plus, 
-  Target, 
-  Sparkles, 
-  Brain, 
-  User, 
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import {
+  Plus,
+  Target,
+  Sparkles,
+  Brain,
+  User,
   Loader2,
   CheckCircle2,
   Clock,
   XCircle,
-  Trash2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+  Trash2,
+  Filter,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
+// --- Interfaces ---
 interface ChildProfile {
   id: string;
   username: string | null;
@@ -66,7 +68,11 @@ interface QuestManagementProps {
   onQuestCreated?: () => void;
 }
 
-const QuestManagement = ({ userId, linkedChildren, onQuestCreated }: QuestManagementProps) => {
+const QuestManagement = ({
+  userId,
+  linkedChildren,
+  onQuestCreated,
+}: QuestManagementProps) => {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -74,31 +80,36 @@ const QuestManagement = ({ userId, linkedChildren, onQuestCreated }: QuestManage
   const [deletingQuest, setDeletingQuest] = useState<string | null>(null);
 
   // Form state
-  const [questName, setQuestName] = useState('');
-  const [questDescription, setQuestDescription] = useState('');
-  const [questTokens, setQuestTokens] = useState('25');
-  const [questChild, setQuestChild] = useState('');
-  const [questVerification, setQuestVerification] = useState<'ai' | 'parent'>('ai');
-  const [filterChild, setFilterChild] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [questName, setQuestName] = useState("");
+  const [questDescription, setQuestDescription] = useState("");
+  const [questTokens, setQuestTokens] = useState("25");
+  const [questChild, setQuestChild] = useState("");
+  const [questVerification, setQuestVerification] = useState<"ai" | "parent">(
+    "ai"
+  );
+
+  // Filters
+  const [filterChild, setFilterChild] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   useEffect(() => {
-    fetchQuests();
+    if (userId) fetchQuests();
   }, [userId]);
 
   const fetchQuests = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('quests')
-        .select('*')
-        .eq('parent_id', userId)
-        .order('created_at', { ascending: false });
+        .from("quests")
+        .select("*")
+        .eq("parent_id", userId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setQuests((data || []) as Quest[]);
     } catch (error) {
-      console.error('Error fetching quests:', error);
+      console.error("Error fetching quests:", error);
+      toast.error("Could not load quests");
     } finally {
       setLoading(false);
     }
@@ -109,28 +120,28 @@ const QuestManagement = ({ userId, linkedChildren, onQuestCreated }: QuestManage
 
     const tokens = parseInt(questTokens);
     if (isNaN(tokens) || tokens <= 0) {
-      toast.error('Please enter a valid token amount');
+      toast.error("Please enter a valid token amount");
       return;
     }
 
     setIsCreating(true);
     try {
-      const { error } = await supabase.from('quests').insert({
+      const { error } = await supabase.from("quests").insert({
         parent_id: userId,
         child_id: questChild,
         name: questName,
         description: questDescription,
         tokens: tokens,
-        quest_type: 'custom',
+        quest_type: "custom",
         verification_method: questVerification,
-        status: 'active',
+        status: "active",
       });
 
       if (error) throw error;
 
-      toast.success('Quest Created!', {
-        description: `${questName} assigned to your child.`,
-        icon: <Sparkles className="w-5 h-5 text-primary" />,
+      toast.success("Quest Created!", {
+        description: `${questName} assigned successfully.`,
+        icon: <Sparkles className='w-5 h-5 text-primary' />,
       });
 
       setIsDialogOpen(false);
@@ -138,8 +149,8 @@ const QuestManagement = ({ userId, linkedChildren, onQuestCreated }: QuestManage
       fetchQuests();
       onQuestCreated?.();
     } catch (error) {
-      console.error('Quest creation error:', error);
-      toast.error('Failed to create quest');
+      console.error("Quest creation error:", error);
+      toast.error("Failed to create quest");
     } finally {
       setIsCreating(false);
     }
@@ -149,164 +160,192 @@ const QuestManagement = ({ userId, linkedChildren, onQuestCreated }: QuestManage
     setDeletingQuest(questId);
     try {
       const { error } = await supabase
-        .from('quests')
-        .update({ status: 'cancelled' })
-        .eq('id', questId);
+        .from("quests")
+        .update({ status: "cancelled" })
+        .eq("id", questId);
 
       if (error) throw error;
 
-      toast.success('Quest cancelled');
+      toast.success("Quest cancelled");
       fetchQuests();
     } catch (error) {
-      console.error('Delete error:', error);
-      toast.error('Failed to cancel quest');
+      console.error("Delete error:", error);
+      toast.error("Failed to cancel quest");
     } finally {
       setDeletingQuest(null);
     }
   };
 
   const resetForm = () => {
-    setQuestName('');
-    setQuestDescription('');
-    setQuestTokens('25');
-    setQuestChild('');
-    setQuestVerification('ai');
+    setQuestName("");
+    setQuestDescription("");
+    setQuestTokens("25");
+    setQuestChild("");
+    setQuestVerification("ai");
   };
 
-  const filteredQuests = quests.filter(quest => {
-    if (filterChild !== 'all' && quest.child_id !== filterChild) return false;
-    if (filterStatus !== 'all' && quest.status !== filterStatus) return false;
+  const filteredQuests = quests.filter((quest) => {
+    if (filterChild !== "all" && quest.child_id !== filterChild) return false;
+    if (filterStatus !== "all" && quest.status !== filterStatus) return false;
+    // Hide cancelled quests unless explicitly filtered for?
+    // For now showing all to match previous logic, but usually cancelled are hidden by default.
     return true;
   });
 
   const getChildName = (childId: string) => {
-    const link = linkedChildren.find(l => l.child_id === childId);
-    return link?.child?.username || 'Unknown';
+    const link = linkedChildren.find((l) => l.child_id === childId);
+    return link?.child?.username || "Unknown";
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <CheckCircle2 className="w-4 h-4 text-primary" />;
-      case 'active':
-        return <Clock className="w-4 h-4 text-orange-500" />;
-      case 'cancelled':
-        return <XCircle className="w-4 h-4 text-muted-foreground" />;
+      case "completed":
+        return {
+          icon: <CheckCircle2 className='w-4 h-4' />,
+          color: "text-green-500",
+          bg: "bg-green-500/10",
+          label: "Done",
+        };
+      case "active":
+        return {
+          icon: <Clock className='w-4 h-4' />,
+          color: "text-orange-500",
+          bg: "bg-orange-500/10",
+          label: "Active",
+        };
+      case "cancelled":
+        return {
+          icon: <XCircle className='w-4 h-4' />,
+          color: "text-muted-foreground",
+          bg: "bg-secondary",
+          label: "Cancelled",
+        };
       default:
-        return <Clock className="w-4 h-4 text-muted-foreground" />;
+        return {
+          icon: <Target className='w-4 h-4' />,
+          color: "text-foreground",
+          bg: "bg-secondary",
+          label: status,
+        };
     }
   };
 
   return (
-    <div className="clean-card overflow-hidden">
-      <div className="p-5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Target className="w-5 h-5 text-primary" />
-          <h3 className="font-display font-bold text-lg">Quest Manager</h3>
+    <div className='clean-card overflow-hidden h-full flex flex-col'>
+      {/* Header */}
+      <div className='p-4 md:p-5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card'>
+        <div className='flex items-center gap-3'>
+          <div className='w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center'>
+            <Target className='w-5 h-5 text-primary' />
+          </div>
+          <div>
+            <h3 className='font-display font-bold text-lg leading-tight'>
+              Quest Manager
+            </h3>
+            <p className='text-xs text-muted-foreground'>
+              Assign and track tasks
+            </p>
+          </div>
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
+            <Button className='gap-2 w-full sm:w-auto shadow-md hover:shadow-lg transition-all'>
+              <Plus className='w-4 h-4' />
               New Quest
             </Button>
           </DialogTrigger>
-          <DialogContent className="clean-card">
+          <DialogContent className='clean-card w-[95vw] max-w-md rounded-2xl'>
             <DialogHeader>
-              <DialogTitle className="font-display text-xl">Create Quest</DialogTitle>
+              <DialogTitle className='font-display text-xl'>
+                Create Quest
+              </DialogTitle>
               <DialogDescription>
                 Assign a custom task to your child.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="font-semibold">Select Child</Label>
+            <div className='space-y-4 py-4'>
+              <div className='space-y-2'>
+                <Label className='font-semibold'>Select Child</Label>
                 <Select value={questChild} onValueChange={setQuestChild}>
-                  <SelectTrigger className="h-12 rounded-xl">
-                    <SelectValue placeholder="Choose a child..." />
+                  <SelectTrigger className='h-12 rounded-xl'>
+                    <SelectValue placeholder='Choose a child...' />
                   </SelectTrigger>
                   <SelectContent>
                     {linkedChildren.map((link) => (
                       <SelectItem key={link.id} value={link.child_id}>
-                        {link.child?.username || 'Child'}
+                        {link.child?.username || "Child"}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label className="font-semibold">Quest Name</Label>
+              <div className='space-y-2'>
+                <Label className='font-semibold'>Quest Name</Label>
                 <Input
-                  placeholder="e.g., Clean your room"
+                  placeholder='e.g., Clean your room'
                   value={questName}
                   onChange={(e) => setQuestName(e.target.value)}
-                  className="h-12 rounded-xl"
+                  className='h-12 rounded-xl'
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="font-semibold">Description (optional)</Label>
+              <div className='space-y-2'>
+                <Label className='font-semibold'>Description (optional)</Label>
                 <Textarea
-                  placeholder="What should they do?"
+                  placeholder='What should they do?'
                   value={questDescription}
                   onChange={(e) => setQuestDescription(e.target.value)}
-                  className="rounded-xl resize-none"
+                  className='rounded-xl resize-none'
                   rows={2}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="font-semibold">Coin Reward</Label>
-                <Input
-                  type="number"
-                  placeholder="25"
-                  value={questTokens}
-                  onChange={(e) => setQuestTokens(e.target.value)}
-                  min="1"
-                  className="h-12 rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-semibold">Verification Method</Label>
-                <Select value={questVerification} onValueChange={(v: 'ai' | 'parent') => setQuestVerification(v)}>
-                  <SelectTrigger className="h-12 rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ai">
-                      <div className="flex items-center gap-2">
-                        <Brain className="w-4 h-4 text-primary" />
-                        <span>AI First (falls back to you)</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="parent">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-primary" />
-                        <span>Parent Only</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {questVerification === 'ai' 
-                    ? "AI will check first. If it fails, you'll review."
-                    : "You'll review all submissions manually."}
-                </p>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label className='font-semibold'>Reward</Label>
+                  <div className='relative'>
+                    <Input
+                      type='number'
+                      placeholder='25'
+                      value={questTokens}
+                      onChange={(e) => setQuestTokens(e.target.value)}
+                      min='1'
+                      className='h-12 rounded-xl pl-8'
+                    />
+                    <span className='absolute left-3 top-3.5 text-lg'>🪙</span>
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label className='font-semibold'>Verification</Label>
+                  <Select
+                    value={questVerification}
+                    onValueChange={(v: "ai" | "parent") =>
+                      setQuestVerification(v)
+                    }>
+                    <SelectTrigger className='h-12 rounded-xl'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='ai'>🤖 AI Check</SelectItem>
+                      <SelectItem value='parent'>👤 Parent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <Button
                 onClick={handleCreateQuest}
-                disabled={!questChild || !questName || !questTokens || isCreating}
-                className="w-full gap-2"
-              >
+                disabled={
+                  !questChild || !questName || !questTokens || isCreating
+                }
+                className='w-full gap-2 h-11 mt-2'>
                 {isCreating ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className='w-5 h-5 animate-spin' />
                 ) : (
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className='w-5 h-5' />
                 )}
                 Create Quest
               </Button>
@@ -316,95 +355,126 @@ const QuestManagement = ({ userId, linkedChildren, onQuestCreated }: QuestManage
       </div>
 
       {/* Filters */}
-      <div className="p-4 border-b border-border bg-secondary/30 flex flex-wrap gap-3">
+      <div className='p-3 md:p-4 border-b border-border bg-secondary/20 flex flex-col sm:flex-row gap-3'>
+        <div className='flex items-center gap-2 text-sm text-muted-foreground sm:hidden mb-1'>
+          <Filter className='w-4 h-4' /> Filters
+        </div>
         <Select value={filterChild} onValueChange={setFilterChild}>
-          <SelectTrigger className="w-[150px] h-9 rounded-lg">
-            <SelectValue placeholder="All Kids" />
+          <SelectTrigger className='w-full sm:w-[160px] h-9 rounded-lg bg-background'>
+            <SelectValue placeholder='All Kids' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Kids</SelectItem>
+            <SelectItem value='all'>All Kids</SelectItem>
             {linkedChildren.map((link) => (
               <SelectItem key={link.id} value={link.child_id}>
-                {link.child?.username || 'Child'}
+                {link.child?.username || "Child"}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[150px] h-9 rounded-lg">
-            <SelectValue placeholder="All Status" />
+          <SelectTrigger className='w-full sm:w-[160px] h-9 rounded-lg bg-background'>
+            <SelectValue placeholder='All Status' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value='all'>All Status</SelectItem>
+            <SelectItem value='active'>Active</SelectItem>
+            <SelectItem value='completed'>Completed</SelectItem>
+            <SelectItem value='cancelled'>Cancelled</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Quest List */}
-      <div className="divide-y divide-border">
+      <div className='divide-y divide-border overflow-y-auto max-h-[600px]'>
         {loading ? (
-          <div className="p-8 text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+          <div className='p-12 text-center'>
+            <Loader2 className='w-8 h-8 animate-spin mx-auto text-primary' />
+            <p className='text-sm text-muted-foreground mt-2'>
+              Loading quests...
+            </p>
           </div>
         ) : filteredQuests.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="font-medium">No quests found</p>
-            <p className="text-sm mt-1">Create a quest to get started.</p>
+          <div className='flex flex-col items-center justify-center p-12 text-center text-muted-foreground'>
+            <div className='w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4'>
+              <Target className='w-8 h-8 opacity-40' />
+            </div>
+            <p className='font-display font-bold text-lg text-foreground'>
+              No quests found
+            </p>
+            <p className='text-sm mt-1 max-w-xs'>
+              {filterStatus !== "all" || filterChild !== "all"
+                ? "Try adjusting your filters to see more results."
+                : "Create a new quest to get your child started!"}
+            </p>
           </div>
         ) : (
-          filteredQuests.slice(0, 20).map((quest) => (
-            <div
-              key={quest.id}
-              className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                {getStatusIcon(quest.status)}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-sm">{quest.name}</p>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
-                      {getChildName(quest.child_id)}
-                    </span>
+          filteredQuests.slice(0, 50).map((quest) => {
+            const statusConfig = getStatusConfig(quest.status);
+            return (
+              <div
+                key={quest.id}
+                className='group flex items-center justify-between p-4 hover:bg-secondary/40 transition-colors'>
+                <div className='flex items-start gap-3 min-w-0 flex-1'>
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+                      statusConfig.bg,
+                      statusConfig.color
+                    )}>
+                    {statusConfig.icon}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                    <span>{format(new Date(quest.created_at), 'MMM d')}</span>
-                    <span>•</span>
-                    <span>{quest.verification_method === 'ai' ? '🤖 AI' : '👤 Parent'}</span>
+
+                  <div className='min-w-0 pr-2'>
+                    <p className='font-medium text-sm text-foreground truncate'>
+                      {quest.name}
+                    </p>
+
+                    <div className='flex flex-wrap items-center gap-x-2 gap-y-1 mt-1'>
+                      <span className='text-xs px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border/50'>
+                        {getChildName(quest.child_id)}
+                      </span>
+                      <span className='text-[10px] text-muted-foreground flex items-center gap-1'>
+                        {format(new Date(quest.created_at), "MMM d")}
+                        <span>•</span>
+                        {quest.verification_method === "ai"
+                          ? "🤖 AI Verified"
+                          : "👤 Parent Review"}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-3">
-                <span className={cn(
-                  "font-display font-bold text-sm",
-                  quest.status === 'completed' ? "text-primary" : "text-muted-foreground"
-                )}>
-                  +{quest.tokens}
-                </span>
-                
-                {quest.status === 'active' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteQuest(quest.id)}
-                    disabled={deletingQuest === quest.id}
-                    className="text-muted-foreground hover:text-destructive h-8 w-8"
-                  >
-                    {deletingQuest === quest.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </Button>
-                )}
+                <div className='flex flex-col items-end gap-2 pl-2'>
+                  <span
+                    className={cn(
+                      "font-display font-bold text-sm",
+                      quest.status === "completed"
+                        ? "text-green-600"
+                        : "text-primary"
+                    )}>
+                    +{quest.tokens}
+                  </span>
+
+                  {quest.status === "active" && (
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={() => handleDeleteQuest(quest.id)}
+                      disabled={deletingQuest === quest.id}
+                      className='h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all'>
+                      {deletingQuest === quest.id ? (
+                        <Loader2 className='w-3 h-3 animate-spin' />
+                      ) : (
+                        <Trash2 className='w-3 h-3' />
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
