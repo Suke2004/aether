@@ -15,21 +15,26 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <Toaster />
-        <Sonner 
-          theme="dark"
+        <Sonner
+          theme='dark'
           toastOptions={{
             style: {
-              background: 'hsl(270 50% 8%)',
-              border: '1px solid hsl(270 40% 20%)',
-              color: 'hsl(180 100% 95%)',
+              background: "hsl(270 50% 8%)",
+              border: "1px solid hsl(270 40% 20%)",
+              color: "hsl(180 100% 95%)",
             },
           }}
         />
-        <BrowserRouter>
+        {/*
+          Use the Vite-provided BASE_URL as the basename so that React Router
+          works correctly when the app is served from a sub-path on GitHub
+          Pages, e.g. https://suke2004.github.io/aether/.
+        */}
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path='/' element={<Index />} />
+            <Route path='/auth' element={<Auth />} />
+            <Route path='*' element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
