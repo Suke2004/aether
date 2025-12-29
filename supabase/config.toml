@@ -1,0 +1,7 @@
+project_id = "pzgducllusfqkqsutswp"
+
+[functions.verify-quest]
+verify_jwt = false
+
+[functions.send-quest-notification]
+verify_jwt = false

@@ -1,0 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Clean Professional Theme inspired by papa.community */
+    --background: 0 0% 100%;
+    --foreground: 220 25% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 20%;
+
+    /* Teal/Green Primary - Professional & Friendly */
+    --primary: 160 85% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Light Gray - Secondary */
+    --secondary: 220 15% 96%;
+    --secondary-foreground: 220 25% 30%;
+
+    /* Muted backgrounds */
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 50%;
+
+    /* Golden Yellow - Accent (like papa.community) */
+    --accent: 45 95% 55%;
+    --accent-foreground: 30 80% 20%;
+
+    /* Red - Destructive */
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 90%;
+    --input: 220 15% 94%;
+    --ring: 160 85% 38%;
+
+    --radius: 0.75rem;
+
+    /* Custom Colors */
+    --coin-gold: 45 95% 55%;
+    --success-green: 160 85% 38%;
+    --warning-orange: 35 95% 55%;
+    --info-blue: 210 90% 55%;
+
+    /* Clean Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 25% 20% / 0.05);
+    --shadow-md: 0 4px 12px -2px hsl(220 25% 20% / 0.08);
+    --shadow-lg: 0 8px 24px -4px hsl(220 25% 20% / 0.12);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 25% 20%;
+    --sidebar-primary: 160 85% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 95% 55%;
+    --sidebar-accent-foreground: 30 80% 20%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 160 85% 38%;
+  }
+
+  .dark {
+    /* Keep light theme - dark mode disabled for kid-friendly experience */
+    --background: 0 0% 100%;
+    --foreground: 220 25% 20%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Clean Card Style */
+  .clean-card {
+    @apply bg-card rounded-2xl border border-border;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Only apply hover effects to clickable cards, not dialogs */
+  button.clean-card:hover,
+  a.clean-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+  }
+
+  /* Golden Badge */
+  .gold-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold;
+    background: linear-gradient(135deg, hsl(var(--coin-gold)) 0%, hsl(40 90% 50%) 100%);
+    color: hsl(30 60% 20%);
+    box-shadow: 0 2px 8px hsl(45 95% 55% / 0.3);
+  }
+
+  /* Navigation Link */
+  .nav-link {
+    @apply px-4 py-2 rounded-lg font-medium text-muted-foreground transition-all duration-200;
+  }
+
+  .nav-link:hover {
+    @apply text-foreground bg-secondary;
+  }
+
+  .nav-link.active {
+    @apply text-primary bg-primary/10 font-semibold;
+  }
+
+  /* Feature Card */
+  .feature-card {
+    @apply bg-card rounded-3xl p-6 border border-border;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Smooth Animations */
+  .fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .bounce-in {
+    animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes bounceIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    60% { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Gentle Float */
+  .float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* Pulse Animation */
+  .pulse-soft {
+    animation: pulseSoft 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* Shake Animation */
+  .shake {
+    animation: shake 0.4s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  /* Success Celebration */
+  .celebrate {
+    animation: celebrate 0.6s ease;
+  }
+
+  @keyframes celebrate {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* Wave decoration - like papa.community */
+  .wave-decoration {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: hsl(var(--accent));
+    border-radius: 100% 100% 0 0;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .font-sans {
+    font-family: 'Quicksand', sans-serif;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(170 80% 45%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
