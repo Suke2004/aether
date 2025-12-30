@@ -35,7 +35,8 @@ import {
   Music,
   Brush,
   Clock,
-  User
+  User,
+  Image as ImageIcon // Renamed to avoid conflict with HTML Image
 } from 'lucide-react';
 import useSound from '@/hooks/useSound';
 import useConfetti from '@/hooks/useConfetti';
@@ -84,7 +85,12 @@ const TheMint = () => {
   const [aiReason, setAiReason] = useState<string>('');
   const [parentQuests, setParentQuests] = useState<ParentQuest[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Ref for Camera input
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  // Ref for Gallery input
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  
   const { playSound } = useSound();
   const { fireConfetti } = useConfetti();
   
@@ -434,14 +440,26 @@ const TheMint = () => {
                 </Select>
               </div>
 
-              {/* Image Upload */}
-              <div className="space-y-2">
-                <Label className="font-semibold">Take a Photo</Label>
+              {/* Image Upload Area */}
+              <div className="space-y-3">
+                <Label className="font-semibold">Add Proof</Label>
+                
+                {/* 1. HIDDEN INPUTS */}
+                {/* Input A: Forces Rear Camera */}
                 <input
-                  ref={fileInputRef}
+                  ref={cameraInputRef}
                   type="file"
                   accept="image/*"
-                  capture="environment"
+                  capture="environment" 
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {/* Input B: Opens Gallery/File Picker */}
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -514,18 +532,33 @@ const TheMint = () => {
                     )}
                   </div>
                 ) : (
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-48 rounded-2xl border-2 border-dashed border-border hover:border-primary transition-colors flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary bg-secondary/30"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Camera className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-semibold">Tap to take a photo</p>
-                      <p className="text-sm">Show us your completed quest</p>
-                    </div>
-                  </button>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* CAMERA BUTTON */}
+                    <button
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="h-32 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-3 group bg-card"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Camera className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <span className="font-medium text-sm text-muted-foreground group-hover:text-primary">
+                        Take Photo
+                      </span>
+                    </button>
+
+                    {/* GALLERY BUTTON */}
+                    <button
+                      onClick={() => galleryInputRef.current?.click()}
+                      className="h-32 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-3 group bg-card"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <ImageIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <span className="font-medium text-sm text-muted-foreground group-hover:text-primary">
+                        Upload File
+                      </span>
+                    </button>
+                  </div>
                 )}
               </div>
 
