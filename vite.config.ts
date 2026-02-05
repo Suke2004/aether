@@ -19,6 +19,11 @@ export default defineConfig(({ mode }) => {
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     "";
+  
+    if (!supabaseUrl || !supabasePublishableKey) {
+      throw new Error("Supabase env vars missing");
+    }
+
 
   return {
     server: {
@@ -33,12 +38,6 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
-    },
-    define: {
-      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabaseUrl),
-      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
-        supabasePublishableKey
-      ),
     },
   };
 });
