@@ -1,10 +1,8 @@
-(The file `d:\Prog\Project-Aether\aether\aether\README.md` exists, but is empty)
-
 # Aether
 
 Production-ready single-page application scaffold built with Vite, React, TypeScript, Tailwind CSS and Radix UI — integrated with Supabase for backend services.
 
-Live demo: https://suke2004.github.io/aether/
+Live demo: https://aether.usr-dev.tech/
 
 ## Table of Contents
 

@@ -30,7 +30,7 @@ const App = () => (
           works correctly when the app is served from a sub-path on GitHub
           Pages, e.g. https://suke2004.github.io/aether/.
         */}
-        <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <BrowserRouter>
           <Routes>
             <Route path='/' element={<Index />} />
             <Route path='/auth' element={<Auth />} />
